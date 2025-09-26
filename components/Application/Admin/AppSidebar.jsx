@@ -13,8 +13,8 @@ import {
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar"
 import Image from 'next/image'
-import logoBlack from '@/public/assets/images/logo-black.png'
-import logoWhite from '@/public/assets/images/logo-white.png'
+import logoBlack from '@/public/assets/images/logo-white.png'
+import logoWhite from '@/public/assets/images/logo-black.png'
 import { Button } from '@/components/ui/button'
 // App sidebar close and arrow icon.
 import { LuChevronRight } from "react-icons/lu";
