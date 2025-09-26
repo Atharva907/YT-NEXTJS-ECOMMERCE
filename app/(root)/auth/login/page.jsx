@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import React, { useState } from "react";
-import Logo from "@/public/assets/images/kisanbasketLogo.png";
+import Logo from "@/public/assets/images/GameArenaLogo.png";
 import Image from "next/image";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
