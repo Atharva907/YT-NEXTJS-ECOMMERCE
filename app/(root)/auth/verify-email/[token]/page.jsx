@@ -114,46 +114,27 @@
 
 
 
-'use client';
+"use client";
 
-import { Card, CardContent } from '@/components/ui/card';
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import VerifiedImg from '@/public/assets/images/verified.gif';
-import VerificationFailedImg from '@/public/assets/images/verification-failed.gif';
-import Logo from '@/public/assets/images/GameArenaLogo.png';
-import Image from 'next/image';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { WEBSITE_HOME } from '@/routes/WebsiteRoute';
-import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useState } from "react";
+import axios from "axios";
+import Image from "next/image";
+import VerifiedImg from "@/public/assets/images/verified.gif";
+import VerificationFailedImg from "@/public/assets/images/verification-failed.gif";
+import { WEBSITE_HOME } from "@/routes/WebsiteRoute";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
-const EmailVerification = () => {
-  const params = useParams();
-  const { token } = params; // get token from dynamic route
-  const router = useRouter();
-
-  const [isVerified, setIsVerified] = useState(null); 
+export default function VerifyEmailPage({ params }) {
+  const { token } = params;
   const [loading, setLoading] = useState(true);
+  const [isVerified, setIsVerified] = useState(null);
 
   useEffect(() => {
-    if (!token) return;
-
     const verifyEmail = async () => {
       try {
-        // Ensure token is URL-safe
-        const { data: verificationResponse } = await axios.post(
-          '/api/auth/verify-email',
-          { token: decodeURIComponent(token) }
-        );
-        setIsVerified(verificationResponse.success);
-
-        // Optional: auto-redirect to homepage after 3 seconds if verified
-        if (verificationResponse.success) {
-          setTimeout(() => {
-            router.push(WEBSITE_HOME);
-          }, 3000);
-        }
+        const { data } = await axios.post("/api/auth/verify-email", { token });
+        setIsVerified(data.success);
       } catch (error) {
         setIsVerified(false);
       } finally {
@@ -161,90 +142,34 @@ const EmailVerification = () => {
       }
     };
 
-    verifyEmail();
-  }, [token, router]);
+    if (token) verifyEmail();
+  }, [token]);
+
+  if (loading) return <p className="text-center text-lg">Verifying your email...</p>;
 
   return (
-    <div className="relative min-h-screen w-full flex items-center justify-center">
-      {/* Background Image */}
-      <div className="absolute inset-0 -z-10">
-        <Image
-          src="/assets/images/bg-image.png"
-          alt="Background"
-          fill
-          priority
-          className="object-cover"
-        />
-      </div>
-
-      {/* Dark overlay */}
-      <div className="absolute inset-0 bg-black/40 -z-10"></div>
-
-      {/* Foreground content */}
-      <div className="relative z-10 flex items-center justify-center w-full">
-        <Card className="w-[400px] bg-white/90 backdrop-blur-md shadow-xl">
-          <CardContent>
-            {/* Logo */}
-            <div className="flex justify-center mb-5">
-              <Image
-                src={Logo.src}
-                width={Logo.width}
-                height={Logo.height}
-                alt="Logo"
-                className="max-w-[150px]"
-              />
-            </div>
-
-            {loading ? (
-              <p className="text-center text-lg">Verifying your email...</p>
-            ) : isVerified ? (
-              <div className="text-center">
-                <div className="flex justify-center items-center">
-                  <Image
-                    src={VerifiedImg.src}
-                    height={VerifiedImg.height}
-                    width={VerifiedImg.width}
-                    alt="Verified Img"
-                    className="h-[100px] w-auto"
-                  />
-                </div>
-                <h1 className="text-2xl font-bold my-5 text-green-500">
-                  Email verification success!
-                </h1>
-                <p className="text-gray-700 mb-3">
-                  Redirecting to homepage in 3 seconds...
-                </p>
-                <Button asChild>
-                  <Link href={WEBSITE_HOME}>Continue Shopping</Link>
-                </Button>
-              </div>
-            ) : (
-              <div className="text-center">
-                <div className="flex justify-center items-center">
-                  <Image
-                    src={VerificationFailedImg.src}
-                    height={VerificationFailedImg.height}
-                    width={VerificationFailedImg.width}
-                    alt="Verification Failed Img"
-                    className="h-[100px] w-auto"
-                  />
-                </div>
-                <h1 className="text-2xl font-bold my-5 text-red-500">
-                  Email verification failed!
-                </h1>
-                <p className="text-gray-700 mb-3">
-                  The verification link may have expired or is invalid.
-                </p>
-                <Button asChild>
-                  <Link href={WEBSITE_HOME}>Continue Shopping</Link>
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+    <div className="flex flex-col items-center justify-center min-h-screen">
+      {isVerified ? (
+        <>
+          <Image src={VerifiedImg} alt="Verified" className="h-[120px] w-auto" />
+          <h1 className="text-2xl font-bold text-green-600 my-4">
+            Email verification successful!
+          </h1>
+          <Button asChild>
+            <Link href={WEBSITE_HOME}>Go to Home</Link>
+          </Button>
+        </>
+      ) : (
+        <>
+          <Image src={VerificationFailedImg} alt="Failed" className="h-[120px] w-auto" />
+          <h1 className="text-2xl font-bold text-red-600 my-4">
+            Email verification failed!
+          </h1>
+          <Button asChild>
+            <Link href={WEBSITE_HOME}>Go to Home</Link>
+          </Button>
+        </>
+      )}
     </div>
   );
-};
-
-export default EmailVerification;
+}
