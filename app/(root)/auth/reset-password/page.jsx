@@ -3,7 +3,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import React, { useState } from 'react';
 import Image from 'next/image';
-import Logo from '@/public/assets/images/kisanbasketLogo.png';
+import Logo from '@/public/assets/images/GameArenaLogo.png';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { zSchema } from '@/lib/zodSchema';
@@ -31,13 +31,11 @@ const ResetPassword = () => {
   const [isOtpVerified, setIsOtpVerified] = useState(false);
   const [resetToken, setResetToken] = useState('');
 
-  // Email input form
   const form = useForm({
     resolver: zodResolver(zSchema.pick({ email: true })),
     defaultValues: { email: '' }
   });
 
-  // 1️⃣ Send OTP
   const handleEmailVerification = async (values) => {
     try {
       setEmailVerificationLoading(true);
@@ -56,7 +54,6 @@ const ResetPassword = () => {
     }
   };
 
-  // 2️⃣ Verify OTP
   const handleOtpVerification = async (values) => {
     try {
       setOtpVerificationLoading(true);
@@ -80,75 +77,95 @@ const ResetPassword = () => {
   };
 
   return (
-    <Card className="w-[400px] mx-auto mt-10">
-      <CardContent>
-        <div className="flex justify-center mb-5">
-          <Image
-            src={Logo.src}
-            width={Logo.width}
-            height={Logo.height}
-            alt="Logo"
-            className="max-w-[150px]"
-          />
-        </div>
+    <div className="relative min-h-screen w-full flex items-center justify-center">
+      {/* Background Image */}
+      <div className="absolute inset-0 -z-10">
+        <Image
+          src="/assets/images/bg-image.png"
+          alt="Background"
+          fill
+          priority
+          className="object-cover"
+        />
+      </div>
 
-        {!otpEmail ? (
-          <>
-            <div className="text-center mb-5">
-              <h1 className="text-3xl font-bold">Reset Password</h1>
-              <p>Enter your email to receive an OTP for password reset.</p>
+      {/* Overlay */}
+      <div className="absolute inset-0 bg-black/40 -z-10"></div>
+
+      {/* Foreground Content */}
+      <div className="relative z-10 flex items-center justify-center w-full">
+        <Card className="w-[400px] bg-white/90 backdrop-blur-md shadow-xl">
+          <CardContent>
+            {/* Logo */}
+            <div className="flex justify-center mb-5">
+              <Image
+                src={Logo.src}
+                width={Logo.width}
+                height={Logo.height}
+                alt="Logo"
+                className="max-w-[150px]"
+              />
             </div>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(handleEmailVerification)}>
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem className="mb-5">
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input type="email" placeholder="example@gmail.com" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <ButtonLoading
-                  loading={emailVerificationLoading}
-                  type="submit"
-                  text="Send OTP"
-                  className="w-full mb-3"
-                />
-                <div className="text-center">
-                  <Link href={WEBSITE_LOGIN} className="text-primary underline">
-                    Back to Login
-                  </Link>
-                </div>
-              </form>
-            </Form>
-          </>
-        ) : (
-          <>
-            {!isOtpVerified ? (
+
+            {!otpEmail ? (
               <>
-                <p className="text-center text-sm mb-3">
-                  OTP sent to: <b>{otpEmail}</b>
-                </p>
-                <OTPVerification
-                  email={otpEmail}
-                  onSubmit={handleOtpVerification}
-                  loading={otpVerificationLoading}
-                />
+                <div className="text-center mb-5">
+                  <h1 className="text-3xl font-bold">Reset Password</h1>
+                  <p>Enter your email to receive an OTP for password reset.</p>
+                </div>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(handleEmailVerification)}>
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem className="mb-5">
+                          <FormLabel>Email</FormLabel>
+                          <FormControl>
+                            <Input type="email" placeholder="example@gmail.com" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <ButtonLoading
+                      loading={emailVerificationLoading}
+                      type="submit"
+                      text="Send OTP"
+                      className="w-full mb-3"
+                    />
+                    <div className="text-center">
+                      <Link href={WEBSITE_LOGIN} className="text-primary underline">
+                        Back to Login
+                      </Link>
+                    </div>
+                  </form>
+                </Form>
               </>
             ) : (
-              <div className="flex justify-center">
-                <UpdatePassword email={otpEmail} resetToken={resetToken} />
-              </div>
+              <>
+                {!isOtpVerified ? (
+                  <>
+                    <p className="text-center text-sm mb-3">
+                      OTP sent to: <b>{otpEmail}</b>
+                    </p>
+                    <OTPVerification
+                      email={otpEmail}
+                      onSubmit={handleOtpVerification}
+                      loading={otpVerificationLoading}
+                    />
+                  </>
+                ) : (
+                  <div className="flex justify-center">
+                    <UpdatePassword email={otpEmail} resetToken={resetToken} />
+                  </div>
+                )}
+              </>
             )}
-          </>
-        )}
-      </CardContent>
-    </Card>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
 };
 
