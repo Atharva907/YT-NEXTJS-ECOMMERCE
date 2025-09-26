@@ -113,7 +113,6 @@
 // export default EmailVerification;
 
 
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -129,14 +128,26 @@ export default function VerifyEmailPage({ params }) {
   const { token } = params;
   const [loading, setLoading] = useState(true);
   const [isVerified, setIsVerified] = useState(null);
+  const [message, setMessage] = useState("");
 
   useEffect(() => {
     const verifyEmail = async () => {
       try {
-        const { data } = await axios.post("/api/auth/verify-email", { token });
+        // Use decodeURIComponent in case token has special characters
+        const decodedToken = decodeURIComponent(token);
+
+        const { data } = await axios.post("/api/auth/verify-email", { token: decodedToken });
+
         setIsVerified(data.success);
+        setMessage(data.message || "");
       } catch (error) {
         setIsVerified(false);
+
+        if (error.response?.data?.message) {
+          setMessage(error.response.data.message);
+        } else {
+          setMessage("Something went wrong while verifying your email.");
+        }
       } finally {
         setLoading(false);
       }
@@ -145,7 +156,12 @@ export default function VerifyEmailPage({ params }) {
     if (token) verifyEmail();
   }, [token]);
 
-  if (loading) return <p className="text-center text-lg">Verifying your email...</p>;
+  if (loading)
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <p className="text-center text-lg">Verifying your email...</p>
+      </div>
+    );
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen">
@@ -155,6 +171,7 @@ export default function VerifyEmailPage({ params }) {
           <h1 className="text-2xl font-bold text-green-600 my-4">
             Email verification successful!
           </h1>
+          {message && <p className="text-center text-gray-700 mb-4">{message}</p>}
           <Button asChild>
             <Link href={WEBSITE_HOME}>Go to Home</Link>
           </Button>
@@ -165,6 +182,7 @@ export default function VerifyEmailPage({ params }) {
           <h1 className="text-2xl font-bold text-red-600 my-4">
             Email verification failed!
           </h1>
+          {message && <p className="text-center text-gray-700 mb-4">{message}</p>}
           <Button asChild>
             <Link href={WEBSITE_HOME}>Go to Home</Link>
           </Button>
