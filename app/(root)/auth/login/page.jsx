@@ -18,7 +18,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { ButtonLoading } from "@/components/Application/ButtonLoading";
 import { z } from "zod";
-// Eye icons
 import { FaRegEyeSlash } from "react-icons/fa";
 import { FaRegEye } from "react-icons/fa6";
 import Link from "next/link";
@@ -33,47 +32,30 @@ import { ADMIN_DASHBOARD } from "@/routes/AdminPanelRoute";
 
 const LoginPage = () => {
   const dispatch = useDispatch();
-  const searchParams = useSearchParams()
-  const router = useRouter()
+  const searchParams = useSearchParams();
+  const router = useRouter();
 
-  // ---------------------
-  // Component state
-  // ---------------------
-  const [loading, setLoading] = useState(false); // login button
-  const [otpVerificationLoading, setOtpVerificationLoading] = useState(false); // OTP button
-  const [showPassword, setShowPassword] = useState(false); // toggle password visibility
-  const [otpEmail, setOtpEmail] = useState(); // email for OTP verification
+  const [loading, setLoading] = useState(false);
+  const [otpVerificationLoading, setOtpVerificationLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [otpEmail, setOtpEmail] = useState();
 
-  // ---------------------
-  // Validation schema using Zod
-  // ---------------------
   const formSchema = zSchema
-    .pick({ email: true }) // validate email
-    .extend({
-      password: z.string().min(3, "Password field is required."),
-    });
+    .pick({ email: true })
+    .extend({ password: z.string().min(3, "Password field is required.") });
 
   const form = useForm({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
+    defaultValues: { email: "", password: "" },
   });
 
-  // ---------------------
-  // Handle login form submission
-  // ---------------------
   const handleLoginSubmit = async (values) => {
     try {
       setLoading(true);
       const { data: loginResponse } = await axios.post("/api/auth/login", values);
 
-      if (!loginResponse.success) {
-        throw new Error(loginResponse.message);
-      }
+      if (!loginResponse.success) throw new Error(loginResponse.message);
 
-      // If OTP is required, show OTP verification component
       setOtpEmail(values.email);
       form.reset();
       showToast("success", loginResponse.message);
@@ -84,29 +66,24 @@ const LoginPage = () => {
     }
   };
 
-  // ---------------------
-  // Handle OTP verification
-  // ---------------------
   const handleOtpVerification = async (values) => {
     try {
       setOtpVerificationLoading(true);
       const { data: otpResponse } = await axios.post("/api/auth/verify-otp", values);
 
-      if (!otpResponse.success) {
-        throw new Error(otpResponse.message);
-      }
+      if (!otpResponse.success) throw new Error(otpResponse.message);
 
-      // OTP successful, clear state and dispatch login
       setOtpEmail("");
       showToast("success", otpResponse.message);
       dispatch(login(otpResponse.data));
 
-      if (searchParams.has('callback')) {
-        router.push(searchParams.get('callback'))
+      if (searchParams.has("callback")) {
+        router.push(searchParams.get("callback"));
       } else {
-        otpResponse.data.role === 'admin' ? router.push(ADMIN_DASHBOARD) : router.push(USER_DASHBOARD)
+        otpResponse.data.role === "admin"
+          ? router.push(ADMIN_DASHBOARD)
+          : router.push(USER_DASHBOARD);
       }
-
     } catch (error) {
       showToast("error", error.message);
     } finally {
@@ -115,78 +92,88 @@ const LoginPage = () => {
   };
 
   return (
-    <div>
-      <Card className="w-[400px]">
-        <CardContent>
-          {/* Logo */}
-          <div className="flex justify-center">
-            <Image
-              src={Logo.src}
-              width={Logo.width}
-              height={Logo.height}
-              alt="logo"
-              className="max-w-[150px]"
-            />
-          </div>
+    <div className="relative min-h-screen w-full flex items-center justify-center">
+      {/* Background Image */}
+      <div className="absolute inset-0 -z-10">
+        <Image
+          src="/assets/images/bg-image.png"
+          alt="Background"
+          fill
+          priority
+          className="object-cover"
+        />
+      </div>
 
-          {/* Login Form or OTP Verification */}
-          {!otpEmail ? (
-            <>
-              {/* Login Form */}
-              <div className="text-center">
-                <h1 className="text-3xl font-bold">Login Into Account</h1>
-                <p>Login into your account by filling out the form below.</p>
-              </div>
+      {/* Overlay */}
+      <div className="absolute inset-0 bg-black/40 -z-10"></div>
 
-              <div className="mt-5">
+      {/* Foreground Content */}
+      <div className="relative z-10 flex items-center justify-center w-full">
+        <Card className="w-[400px] bg-white/90 backdrop-blur-md shadow-xl">
+          <CardContent>
+            {/* Logo */}
+            <div className="flex justify-center mb-5">
+              <Image
+                src={Logo.src}
+                width={Logo.width}
+                height={Logo.height}
+                alt="logo"
+                className="max-w-[150px]"
+              />
+            </div>
+
+            {!otpEmail ? (
+              <>
+                {/* Login Form */}
+                <div className="text-center mb-5">
+                  <h1 className="text-3xl font-bold">Login Into Account</h1>
+                  <p>Login into your account by filling out the form below.</p>
+                </div>
+
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(handleLoginSubmit)}>
                     {/* Email */}
-                    <div className="mb-5">
-                      <FormField
-                        control={form.control}
-                        name="email"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Email</FormLabel>
-                            <FormControl>
-                              <Input type="email" placeholder="example@gmail.com" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem className="mb-5">
+                          <FormLabel>Email</FormLabel>
+                          <FormControl>
+                            <Input type="email" placeholder="example@gmail.com" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
                     {/* Password */}
-                    <div className="mb-5">
-                      <FormField
-                        control={form.control}
-                        name="password"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Password</FormLabel>
-                            <div className="relative">
-                              <FormControl>
-                                <Input
-                                  type={showPassword ? "text" : "password"}
-                                  placeholder="********"
-                                  {...field}
-                                />
-                              </FormControl>
-                              <button
-                                type="button"
-                                className="absolute inset-y-0 right-3 flex items-center text-gray-500 hover:text-gray-700"
-                                onClick={() => setShowPassword(!showPassword)}
-                              >
-                                {showPassword ? <FaRegEye /> : <FaRegEyeSlash />}
-                              </button>
-                            </div>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
+                    <FormField
+                      control={form.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem className="mb-5 relative">
+                          <FormLabel>Password</FormLabel>
+                          <div className="relative">
+                            <FormControl>
+                              <Input
+                                type={showPassword ? "text" : "password"}
+                                placeholder="********"
+                                {...field}
+                              />
+                            </FormControl>
+                            <button
+                              type="button"
+                              className="absolute inset-y-0 right-3 flex items-center text-gray-500 hover:text-gray-700"
+                              onClick={() => setShowPassword(!showPassword)}
+                            >
+                              {showPassword ? <FaRegEye /> : <FaRegEyeSlash />}
+                            </button>
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
                     {/* Submit Button */}
                     <div className="mb-3">
@@ -200,7 +187,7 @@ const LoginPage = () => {
 
                     {/* Links */}
                     <div className="text-center">
-                      <div className="flex justify-center gap-1 items-center">
+                      <div className="flex justify-center gap-1 items-center mb-2">
                         <p>Don't have account?</p>
                         <Link href={WEBSITE_REGISTER} className="text-primary underline">
                           Create account!
@@ -214,18 +201,17 @@ const LoginPage = () => {
                     </div>
                   </form>
                 </Form>
-              </div>
-            </>
-          ) : (
-            // OTP Verification Component
-            <OTPVerification
-              email={otpEmail}
-              onSubmit={handleOtpVerification}
-              loading={otpVerificationLoading}
-            />
-          )}
-        </CardContent>
-      </Card>
+              </>
+            ) : (
+              <OTPVerification
+                email={otpEmail}
+                onSubmit={handleOtpVerification}
+                loading={otpVerificationLoading}
+              />
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
