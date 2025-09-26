@@ -5,7 +5,7 @@ import React, { useState, useEffect, use } from 'react';
 import axios from 'axios';
 import VerifiedImg from '@/public/assets/images/verified.gif';
 import VerificationFailedImg from '@/public/assets/images/verification-failed.gif';
-import Logo from '@/public/assets/images/kisanbasketLogo.png'; // optional, show logo if needed
+import Logo from '@/public/assets/images/GameArenaLogo.png';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
