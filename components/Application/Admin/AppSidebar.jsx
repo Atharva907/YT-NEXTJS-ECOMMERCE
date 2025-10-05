@@ -50,14 +50,14 @@ const AppSidebar = ({ isOpen = false, onClose = () => {} }) => {
             <div className="flex items-center gap-4">
               <Image
                 src={logoBlack}
-                width={80}
+                width={150}
                 height={80}
                 className="block dark:hidden"
                 alt="logo-dark"
               />
               <Image
                 src={logoWhite}
-                width={80}
+                width={150}
                 height={80}
                 className="hidden dark:block"
                 alt="logo-white"
@@ -86,16 +86,16 @@ const AppSidebar = ({ isOpen = false, onClose = () => {} }) => {
                   <CollapsibleTrigger asChild>
                     <SidebarMenuButton
                       asChild
-                      className="font-semibold px-3 py-3 flex items-center w-full text-left text-lg"
+                      className="px-3 py-3 flex items-center w-full text-left text-sm" 
                     >
                       <Link
                         href={menu?.url}
-                        className="flex items-center w-full gap-3 text-lg"
+                        className="flex items-center w-full gap-3 text-sm" 
                       >
-                        <menu.icon className="text-xl" />
+                        <menu.icon className="text-base" /> 
                         <span>{menu.title}</span>
                         {menu.submenu?.length > 0 && (
-                          <LuChevronRight className="ml-auto text-xl transition-transform duration-200 group-data-[state-open]/collapsible:rotate-90" />
+                          <LuChevronRight className="ml-auto text-base transition-transform duration-200 group-data-[state-open]/collapsible:rotate-90" /> // Changed to text-base
                         )}
                       </Link>
                     </SidebarMenuButton>
@@ -108,7 +108,7 @@ const AppSidebar = ({ isOpen = false, onClose = () => {} }) => {
                           <SidebarMenuSubItem key={si}>
                             <SidebarMenuSubButton
                               asChild
-                              className="px-3 py-2 text-base"
+                              className="px-3 py-2 text-sm" 
                             >
                               <Link href={sub.url}>{sub.title}</Link>
                             </SidebarMenuSubButton>
