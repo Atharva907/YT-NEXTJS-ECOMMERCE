@@ -1,9 +1,9 @@
 'use client'
 
-import { zSchema } from '@/lib/zodSchema'                        // Zod schema for validation
-import { zodResolver } from '@hookform/resolvers/zod'           // Zod resolver for react-hook-form
+import { zSchema } from '@/lib/zodSchema'                       
+import { zodResolver } from '@hookform/resolvers/zod'           
 import React, { useState, useEffect } from 'react'
-import { ButtonLoading } from './ButtonLoading'                 // Custom button with loading spinner
+import { ButtonLoading } from './ButtonLoading'                 
 import { useForm } from 'react-hook-form'
 import {
   Form,
@@ -12,37 +12,31 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form"                                  // Custom UI form components
+} from "@/components/ui/form"                                  
 import {
   InputOTP,
   InputOTPGroup,
   InputOTPSlot,
-} from "@/components/ui/input-otp"                             // OTP input components
-import { showToast } from '@/lib/showToast'                     // Toast notifications
-import axios from 'axios'                                       // HTTP requests
-
-// ---------------------
-// OTP Verification Component
-// ---------------------
+} from "@/components/ui/input-otp"                             
+import { showToast } from '@/lib/showToast'                     
+import axios from 'axios'                                     
 const OTPVerification = ({ email, onSubmit, loading }) => {
-  const [isResendingOtp, setIsResendingOtp] = useState(false)  // Track resend OTP loading
+  const [isResendingOtp, setIsResendingOtp] = useState(false)  
 
-  // Pick only OTP and email validation from Zod schema
   const formSchema = zSchema.pick({
     otp: true,
     email: true,
   })
 
-  // Initialize react-hook-form
+
   const form = useForm({
-    resolver: zodResolver(formSchema),  // Validate form using Zod
+    resolver: zodResolver(formSchema),  
     defaultValues: {
       otp: '',
-      email: '',                        // Will set dynamically via useEffect
+      email: '',                       
     },
   })
 
-  // Set email dynamically when prop is available
   useEffect(() => {
     if (email) {
       form.setValue('email', email)
@@ -52,17 +46,10 @@ const OTPVerification = ({ email, onSubmit, loading }) => {
   // Regex for 6-digit numeric OTP
   const REGEXP_ONLY_DIGITS_AND_CHARS = /^[0-9]{6}$/
 
-  // ---------------------
-  // Handle OTP Verification
-  // ---------------------
   const handleOtpVerification = async (values) => {
-    // Call parent onSubmit function with form values
     onSubmit(values)
   }
 
-  // ---------------------
-  // Handle Resend OTP
-  // ---------------------
   const resendOTP = async () => {
     if (!email) {
       showToast("error", "Email not available, cannot resend OTP")
@@ -72,9 +59,8 @@ const OTPVerification = ({ email, onSubmit, loading }) => {
     try {
       setIsResendingOtp(true)
 
-      // Call API to resend OTP
       const { data: resendOtpResponse } = await axios.post('/api/auth/resend-otp', {
-        email,  // ✅ safe prop
+        email,  
       })
 
       if (!resendOtpResponse.success) {
@@ -117,8 +103,8 @@ const OTPVerification = ({ email, onSubmit, loading }) => {
                   <FormControl>
                     <InputOTP
                       maxLength={6}
-                      value={field.value}         // Bind value to form
-                      onChange={field.onChange}   // Bind onChange to form
+                      value={field.value}         
+                      onChange={field.onChange}   
                     >
                       <InputOTPGroup>
                         {[0, 1, 2, 3, 4, 5].map((i) => (
@@ -131,7 +117,7 @@ const OTPVerification = ({ email, onSubmit, loading }) => {
                       </InputOTPGroup>
                     </InputOTP>
                   </FormControl>
-                  <FormMessage />                 {/* Shows validation errors */}
+                  <FormMessage />                 
                 </FormItem>
               )}
             />

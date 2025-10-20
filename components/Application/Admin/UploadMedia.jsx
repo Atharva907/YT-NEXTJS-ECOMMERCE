@@ -16,9 +16,30 @@ const UploadMedia = ({ isMultiple = true }) => {
     showToast("success", "Upload successful!");
   };
 
-  const handleOnQueueEnd = (results) => {
-    // You can customize this logic as needed
-    showToast("info", "Upload queue finished!");
+  const handleOnQueueEnd = async (results) => {
+    const files = results.info.files 
+    const uploadedFiles = files.filter(file => file.uploadInfo).map(file => ({
+      asset_id: file.uploadInfo.asset_id ,
+      public_id: file.uploadInfo.public_id ,
+      secure_url: file.uploadInfo.secure_url ,
+      path: file.uploadInfo.path ,
+      thumbnail_url: file.uploadInfo.thumbnail_url ,
+    }))
+    
+    if(uploadedFiles.length > 0) {
+      try {
+        const { data: mediaUploadResponse } = await axios.post('api/media/create', uploadedFiles)
+
+        if(!mediaUploadResponse.success){
+          throw new Error(mediaUploadResponse.message)
+        }
+
+        showToast("success", mediaUploadResponse.message)
+
+      } catch (error) {
+        showToast("error", error.message)
+      }
+    }
   };
 
   return (
