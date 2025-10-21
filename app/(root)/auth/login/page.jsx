@@ -75,6 +75,14 @@ const LoginPage = () => {
 
       setOtpEmail("");
       showToast("success", otpResponse.message);
+      
+      // Save token to cookie for future API requests
+      console.log('Saving token to cookie:', otpResponse.data.token);
+      const cookieString = `token=${otpResponse.data.token}; path=/; max-age=900`;
+      // Removed secure and samesite attributes for local development
+      document.cookie = cookieString;
+      console.log('Cookie set:', document.cookie);
+      
       dispatch(login(otpResponse.data));
 
       if (searchParams.has("callback")) {
