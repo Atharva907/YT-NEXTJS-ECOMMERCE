@@ -104,11 +104,11 @@ export async function POST(request) {
       return response(false, 404, "User not found.");
     }
 
-    // Generate JWT token valid for 15 minutes
+    // Generate JWT token valid for 24 hours
     const secret = new TextEncoder().encode(process.env.SECRET_KEY);
-    const token = await new SignJWT({ email, id: user._id })
+    const token = await new SignJWT({ email, id: user._id.toString() })
       .setIssuedAt()
-      .setExpirationTime("15m")
+      .setExpirationTime("24h")
       .setProtectedHeader({ alg: "HS256" })
       .sign(secret);
 

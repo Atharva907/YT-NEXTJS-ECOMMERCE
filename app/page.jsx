@@ -2,11 +2,14 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { NEWS_PAGE } from "@/routes/WebsiteRoute";
+import { tournamentsData } from "@/lib/data";
 
 const GameArena = () => {
   const [isScrolled, setIsScrolled] = React.useState(false);
+  const [upcomingTournaments, setUpcomingTournaments] = useState([]);
 
   // Add styles for animation
   React.useEffect(() => {
@@ -39,6 +42,28 @@ const GameArena = () => {
 
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Load upcoming tournaments from API
+  useEffect(() => {
+    const fetchUpcomingTournaments = async () => {
+      try {
+        // Fetch tournaments with "upcoming" status from our API
+        const response = await fetch('/api/tournaments?status=upcoming');
+        if (!response.ok) {
+          throw new Error('Failed to fetch tournaments');
+        }
+        const data = await response.json();
+        // Limit to 3 tournaments for display
+        setUpcomingTournaments(data.slice(0, 3));
+      } catch (error) {
+        console.error("Error fetching tournaments:", error);
+        // Set empty array if there's an error
+        setUpcomingTournaments([]);
+      }
+    };
+    
+    fetchUpcomingTournaments();
   }, []);
 
   const features = [
@@ -238,41 +263,23 @@ const GameArena = () => {
             Upcoming Tournaments
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[
-              {
-                game: "Cyber Strike",
-                date: "June 15, 2025",
-                prize: "$10,000",
-                players: "256/512",
-                image: "🎮",
-              },
-              {
-                game: "Battle Legends",
-                date: "June 22, 2025",
-                prize: "$25,000",
-                players: "128/256",
-                image: "⚔️",
-              },
-              {
-                game: "Space Conquest",
-                date: "July 5, 2025",
-                prize: "$50,000",
-                players: "64/128",
-                image: "🚀",
-              },
-            ].map((tournament, index) => (
+            {upcomingTournaments.map((tournament, index) => (
               <Card
                 key={index}
                 className="bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition-all duration-300 rounded-xl overflow-hidden hover:shadow-[0_0_20px_rgba(79,70,229,0.3)] hover:-translate-y-2"
               >
                 <div className="h-48 bg-gradient-to-br from-purple-900/30 to-blue-900/30 flex items-center justify-center text-6xl">
-                  {tournament.image}
+                  🎮
                 </div>
                 <CardContent className="p-6">
                   <h3 className="text-2xl font-bold mb-2 text-[#00FFAA]">
-                    {tournament.game}
+                    {tournament.name}
                   </h3>
                   <div className="space-y-2 mb-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-400">Game:</span>
+                      <span>{tournament.game}</span>
+                    </div>
                     <div className="flex justify-between items-center">
                       <span className="text-gray-400">Date:</span>
                       <span>{tournament.date}</span>
@@ -284,8 +291,12 @@ const GameArena = () => {
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
+                      <span className="text-gray-400">Entry Fee:</span>
+                      <span>{tournament.entryFee}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
                       <span className="text-gray-400">Players:</span>
-                      <span>{tournament.players}</span>
+                      <span>{tournament.currentPlayers}/{tournament.maxPlayers}</span>
                     </div>
                   </div>
                   <Button className="w-full bg-gradient-to-r from-[#00FFAA] to-[#4F46E5] text-[#0B0F19] font-bold py-2 rounded-md hover:shadow-[0_0_20px_rgba(0,255,170,0.5)] transition-all duration-300">
@@ -528,9 +539,11 @@ const GameArena = () => {
             ))}
           </div>
           <div className="text-center mt-12">
-            <Button className="bg-transparent border border-[#00FFAA] text-[#00FFAA] hover:bg-[#00FFAA] hover:text-[#0B0F19] transition-all duration-300 shadow-[0_0_10px_rgba(0,255,170,0.5)] hover:shadow-[0_0_20px_rgba(0,255,170,0.8)] px-8 py-3 rounded-full">
-              View All News
-            </Button>
+            <Link href={NEWS_PAGE}>
+              <Button className="bg-transparent border border-[#00FFAA] text-[#00FFAA] hover:bg-[#00FFAA] hover:text-[#0B0F19] transition-all duration-300 shadow-[0_0_10px_rgba(0,255,170,0.5)] hover:shadow-[0_0_20px_rgba(0,255,170,0.8)] px-8 py-3 rounded-full">
+                View All News
+              </Button>
+            </Link>
           </div>
         </div>
       </section>

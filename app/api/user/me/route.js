@@ -34,10 +34,12 @@ export async function GET(request) {
       console.log("Token verified successfully, payload:", payload);
       
       // Get user data
-      const user = await UserModel.findById(payload.id);
+      // Ensure the id is a string for MongoDB query
+      const userId = typeof payload.id === 'string' ? payload.id : payload.id.toString();
+      const user = await UserModel.findById(userId);
 
       if (!user) {
-        console.log("User not found with ID:", payload.id);
+        console.log("User not found with ID:", userId);
         return response(false, 404, "User not found");
       }
       

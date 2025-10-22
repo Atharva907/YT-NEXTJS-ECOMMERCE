@@ -78,7 +78,8 @@ const LoginPage = () => {
       
       // Save token to cookie for future API requests
       console.log('Saving token to cookie:', otpResponse.data.token);
-      const cookieString = `token=${otpResponse.data.token}; path=/; max-age=900`;
+      // Set cookie with longer expiration time (24 hours = 86400 seconds)
+      const cookieString = `token=${otpResponse.data.token}; path=/; max-age=86400`;
       // Removed secure and samesite attributes for local development
       document.cookie = cookieString;
       console.log('Cookie set:', document.cookie);

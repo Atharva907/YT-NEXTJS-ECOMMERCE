@@ -1,6 +1,6 @@
 import { combineReducers, configureStore } from "@reduxjs/toolkit";
 import { persistReducer, persistStore } from "redux-persist";
-import storage from "redux-persist/lib/storage"; // ✅ correct storage import
+import storage from "@/lib/reduxStorage"; // Custom storage implementation for Next.js SSR
 import authReducer from "./reducer/authReducer";
 
 // Root reducer

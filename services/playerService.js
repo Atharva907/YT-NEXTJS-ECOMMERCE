@@ -9,12 +9,29 @@ export const getPlayerData = async () => {
       console.log('Document cookies:', document.cookie);
     }
     
-    // Get token from localStorage
+    // Get token from cookies first
     let token = null;
     try {
       token = document.cookie.split('; ').find(row => row.startsWith('token='))?.split('=')[1];
     } catch (e) {
       console.error("Error getting token from cookies:", e);
+    }
+
+    // If no token in cookies, try to get from Redux store
+    if (!token && typeof window !== 'undefined') {
+      try {
+        const persistState = localStorage.getItem('persist:root');
+        if (persistState) {
+          const parsedState = JSON.parse(persistState);
+          if (parsedState.authStore) {
+            const authData = JSON.parse(parsedState.authStore);
+            token = authData.auth?.token;
+            console.log('Found token in Redux store');
+          }
+        }
+      } catch (e) {
+        console.error("Error getting token from Redux store:", e);
+      }
     }
 
     const headers = {
