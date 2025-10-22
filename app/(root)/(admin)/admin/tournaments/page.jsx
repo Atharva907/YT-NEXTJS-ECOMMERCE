@@ -33,79 +33,23 @@ const TournamentsPage = () => {
     imageUrl: ""
   });
 
-  // Mock data - in a real app, this would be fetched from an API
+  // Fetch tournaments from API
   useEffect(() => {
-    const mockTournaments = [
-      {
-        id: 1,
-        name: "Summer Championship 2023",
-        game: "Valorant",
-        description: "The biggest Valorant tournament of the summer with teams from all over the region.",
-        startDate: "2023-07-15",
-        endDate: "2023-07-20",
-        startTime: "10:00",
-        endTime: "18:00",
-        location: "Online",
-        maxParticipants: 32,
-        currentParticipants: 28,
-        status: "live",
-        prize: "$5,000",
-        rules: "Standard 5v5 tournament rules. Single elimination.",
-        imageUrl: "/assets/tournaments/valorant-summer.jpg"
-      },
-      {
-        id: 2,
-        name: "CS:GO Masters League",
-        game: "Counter-Strike: Global Offensive",
-        description: "Professional CS:GO tournament with top-tier teams competing for the championship title.",
-        startDate: "2023-08-10",
-        endDate: "2023-08-15",
-        startTime: "14:00",
-        endTime: "22:00",
-        location: "Berlin, Germany",
-        maxParticipants: 16,
-        currentParticipants: 16,
-        status: "upcoming",
-        prize: "$10,000",
-        rules: "Standard tournament rules. Double elimination.",
-        imageUrl: "/assets/tournaments/csgo-masters.jpg"
-      },
-      {
-        id: 3,
-        name: "Fortnite Battle Royale",
-        game: "Fortnite",
-        description: "Epic Fortnite Battle Royale tournament with solo and duo competitions.",
-        startDate: "2023-06-05",
-        endDate: "2023-06-07",
-        startTime: "16:00",
-        endTime: "20:00",
-        location: "Online",
-        maxParticipants: 100,
-        currentParticipants: 87,
-        status: "completed",
-        prize: "$3,000",
-        rules: "Solo and duo modes. Standard battle royale rules.",
-        imageUrl: "/assets/tournaments/fortnite-br.jpg"
-      },
-      {
-        id: 4,
-        name: "League of Legends Regional",
-        game: "League of Legends",
-        description: "Regional qualifying tournament for the world championship.",
-        startDate: "2023-09-01",
-        endDate: "2023-09-05",
-        startTime: "12:00",
-        endTime: "20:00",
-        location: "Seoul, South Korea",
-        maxParticipants: 8,
-        currentParticipants: 5,
-        status: "upcoming",
-        prize: "$15,000",
-        rules: "Standard 5v5 Summoner's Rift. Best of 3 for group stage, best of 5 for playoffs.",
-        imageUrl: "/assets/tournaments/lol-regional.jpg"
+    const fetchTournaments = async () => {
+      try {
+        const response = await fetch('/api/tournaments');
+        if (!response.ok) {
+          throw new Error('Failed to fetch tournaments');
+        }
+        const data = await response.json();
+        setTournaments(data);
+      } catch (error) {
+        console.error("Error fetching tournaments:", error);
+        setTournaments([]);
       }
-    ];
-    setTournaments(mockTournaments);
+    };
+
+    fetchTournaments();
   }, []);
 
   const handleInputChange = (e) => {
@@ -141,36 +85,80 @@ const TournamentsPage = () => {
     });
   };
 
-  const handleCreateTournament = () => {
-    const newTournament = {
-      id: tournaments.length + 1,
-      ...formData,
-      currentParticipants: 0
-    };
-    setTournaments([...tournaments, newTournament]);
-    resetForm();
-    setIsCreateModalOpen(false);
-  };
+  const handleCreateTournament = async () => {
+    try {
+      const response = await fetch('/api/tournaments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
 
-  const handleEditTournament = () => {
-    const updatedTournaments = tournaments.map(tournament => {
-      if (tournament.id === selectedTournament.id) {
-        return {
-          ...tournament,
-          ...formData
-        };
+      if (!response.ok) {
+        throw new Error('Failed to create tournament');
       }
-      return tournament;
-    });
-    setTournaments(updatedTournaments);
-    resetForm();
-    setIsEditModalOpen(false);
-    setSelectedTournament(null);
+
+      const newTournament = await response.json();
+      setTournaments([...tournaments, newTournament]);
+      resetForm();
+      setIsCreateModalOpen(false);
+    } catch (error) {
+      console.error("Error creating tournament:", error);
+      alert("Failed to create tournament. Please try again.");
+    }
   };
 
-  const handleDeleteTournament = (id) => {
+  const handleEditTournament = async () => {
+    try {
+      const response = await fetch('/api/tournaments', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: selectedTournament._id,
+          ...formData
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update tournament');
+      }
+
+      const updatedTournament = await response.json();
+      const updatedTournaments = tournaments.map(tournament => {
+        if (tournament.id === selectedTournament.id) {
+          return updatedTournament;
+        }
+        return tournament;
+      });
+      setTournaments(updatedTournaments);
+      resetForm();
+      setIsEditModalOpen(false);
+      setSelectedTournament(null);
+    } catch (error) {
+      console.error("Error updating tournament:", error);
+      alert("Failed to update tournament. Please try again.");
+    }
+  };
+
+  const handleDeleteTournament = async (id) => {
     if (window.confirm("Are you sure you want to delete this tournament?")) {
-      setTournaments(tournaments.filter(tournament => tournament.id !== id));
+      try {
+        const response = await fetch(`/api/tournaments?id=${id}`, {
+          method: 'DELETE',
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to delete tournament');
+        }
+
+        setTournaments(tournaments.filter(tournament => tournament.id !== id));
+      } catch (error) {
+        console.error("Error deleting tournament:", error);
+        alert("Failed to delete tournament. Please try again.");
+      }
     }
   };
 
@@ -408,7 +396,7 @@ const TournamentsPage = () => {
         <TabsContent value="all" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {filterTournaments("all").map((tournament) => (
-              <Card key={tournament.id} className="overflow-hidden">
+              <Card key={tournament._id} className="overflow-hidden">
                 <div className="aspect-video w-full bg-gray-200 dark:bg-gray-700 relative">
                   {/* In a real app, use Next.js Image component */}
                   <div className="absolute inset-0 flex items-center justify-center text-gray-500">
@@ -449,7 +437,7 @@ const TournamentsPage = () => {
                     <Button size="sm" variant="outline" onClick={() => openEditModal(tournament)}>
                       <Edit className="h-4 w-4" />
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => handleDeleteTournament(tournament.id)}>
+                    <Button size="sm" variant="outline" onClick={() => handleDeleteTournament(tournament._id)}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
@@ -504,7 +492,7 @@ const TournamentsPage = () => {
                     <Button size="sm" variant="outline" onClick={() => openEditModal(tournament)}>
                       <Edit className="h-4 w-4" />
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => handleDeleteTournament(tournament.id)}>
+                    <Button size="sm" variant="outline" onClick={() => handleDeleteTournament(tournament._id)}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
@@ -517,7 +505,7 @@ const TournamentsPage = () => {
         <TabsContent value="upcoming" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {filterTournaments("upcoming").map((tournament) => (
-              <Card key={tournament.id} className="overflow-hidden">
+              <Card key={tournament._id} className="overflow-hidden">
                 <div className="aspect-video w-full bg-gray-200 dark:bg-gray-700 relative">
                   {/* In a real app, use Next.js Image component */}
                   <div className="absolute inset-0 flex items-center justify-center text-gray-500">
@@ -559,7 +547,7 @@ const TournamentsPage = () => {
                     <Button size="sm" variant="outline" onClick={() => openEditModal(tournament)}>
                       <Edit className="h-4 w-4" />
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => handleDeleteTournament(tournament.id)}>
+                    <Button size="sm" variant="outline" onClick={() => handleDeleteTournament(tournament._id)}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
@@ -614,7 +602,7 @@ const TournamentsPage = () => {
                     <Button size="sm" variant="outline" onClick={() => openEditModal(tournament)}>
                       <Edit className="h-4 w-4" />
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => handleDeleteTournament(tournament.id)}>
+                    <Button size="sm" variant="outline" onClick={() => handleDeleteTournament(tournament._id)}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
