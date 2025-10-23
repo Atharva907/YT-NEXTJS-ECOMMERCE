@@ -73,8 +73,10 @@ export async function POST(request) {
     // ---------------------
     const host = request?.headers?.get("host");
     const protocol = process.env.NODE_ENV === "production" ? "https" : "http";
-    const baseUrl =
-      process.env.NEXT_PUBLIC_BASE_URL || `${protocol}://${host}`;
+
+    // Use NEXT_PUBLIC_BASE_URL if available, otherwise construct from request headers
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 
+      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : `${protocol}://${host}`);
 
     const verificationUrl = `${baseUrl}/auth/verify-email/${token}`;
 
