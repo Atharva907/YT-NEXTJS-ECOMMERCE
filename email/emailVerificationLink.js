@@ -172,7 +172,7 @@ export const emailVerificationLink = (link) => {
                                                                 <h4
                                                                     style="margin: 0; color: #7747FF; direction: ltr; font-family: Arial, Helvetica Neue, Helvetica, sans-serif; font-size: 20px; font-weight: 700; letter-spacing: normal; line-height: 120%; text-align: center; margin-top: 0; margin-bottom: 0; mso-line-height-alt: 45.6px;">
 
-                                                                    <a href="${link}"
+                                                                    <a href="${encodeURIComponent(link)}"
                                                                         style="background-color: #7747FF;color:white;padding:10px 30px;text-decoration: none; border-radius: 50px;">Verify</a>
                                                                 </h4>
                                                                 
@@ -190,7 +190,7 @@ export const emailVerificationLink = (link) => {
                                                                     <p style="margin: 0; word-break: break-word;">If the button above doesn’t work, you can copy and
                                                                         paste the following link into your browser:</p>
                                                                       
-                                                                        <a href="${link}">${link}</a>
+                                                                        <a href="${encodeURIComponent(link)}">${link}</a>
                                                                 </div>
                                                             </td>
                                                         </tr>
