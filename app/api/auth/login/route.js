@@ -64,7 +64,7 @@ export async function POST(request) {
                 .sign(secret);
 
             await sendMail(
-                "Email Verification request from Atharva Chavan",
+                "Email Verification request from GameArena",
                 email,
                 emailVerificationLink(`${process.env.NEXT_PUBLIC_BASE_URL}/auth/verify-email/${token}`)
             );
