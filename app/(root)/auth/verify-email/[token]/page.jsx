@@ -115,7 +115,7 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, use } from "react";
 import axios from "axios";
 import Image from "next/image";
 import VerifiedImg from "@/public/assets/images/verified.gif";
@@ -125,7 +125,8 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 export default function VerifyEmailPage({ params }) {
-  const { token } = params;
+  const resolvedParams = use(params);
+  const { token } = resolvedParams;
   const [loading, setLoading] = useState(true);
   const [isVerified, setIsVerified] = useState(null);
   const [message, setMessage] = useState("");

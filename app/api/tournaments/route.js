@@ -20,6 +20,29 @@ export async function GET(request) {
     return NextResponse.json(tournaments);
   } catch (error) {
     console.error("Error fetching tournaments:", error);
+    
+    // Check for specific MongoDB connection errors
+    if (error.code === 'ENOTFOUND' || error.message.includes('querySrv ENOTFOUND')) {
+      return NextResponse.json(
+        { 
+          message: "Database connection error. Please check your MongoDB configuration.",
+          error: "Invalid MongoDB connection string" 
+        },
+        { status: 500 }
+      );
+    }
+    
+    // Check for authentication errors
+    if (error.code === 18 || error.message.includes('Authentication failed')) {
+      return NextResponse.json(
+        { 
+          message: "Database authentication error. Please check your credentials.",
+          error: "Invalid MongoDB credentials" 
+        },
+        { status: 401 }
+      );
+    }
+    
     return NextResponse.json(
       { message: "An error occurred while fetching tournaments." },
       { status: 500 }
