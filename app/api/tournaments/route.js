@@ -17,7 +17,7 @@ export async function GET(request) {
     // Fetch tournaments from database
     const tournaments = await Tournament.find(query).sort({ createdAt: -1 });
     
-    return NextResponse.json(tournaments);
+    return NextResponse.json({ data: tournaments });
   } catch (error) {
     console.error("Error fetching tournaments:", error);
     
@@ -83,6 +83,10 @@ export async function PUT(request) {
     
     const tournamentData = await request.json();
     const { id } = tournamentData;
+    
+    // Debug logs
+    console.log("Updating tournament with ID:", id);
+    console.log("Tournament data:", tournamentData);
 
     if (!id) {
       return NextResponse.json(
@@ -92,19 +96,38 @@ export async function PUT(request) {
     }
 
     // Find and update the tournament in the database
-    const updatedTournament = await Tournament.findByIdAndUpdate(
-      id,
-      tournamentData,
-      { new: true } // Return the updated document
+    console.log("Attempting to update tournament with ID:", id);
+    console.log("Update data:", tournamentData);
+    
+    // Remove the id from the update data to prevent updating it
+    const { id: tournamentId, ...updateData } = tournamentData;
+    
+    const updatedTournament = await Tournament.findOneAndUpdate(
+      { _id: id },
+      { $set: updateData },
+      { new: true, runValidators: true } // Return the updated document and run validators
     );
 
+    console.log("Update result:", updatedTournament);
+
     if (!updatedTournament) {
+      console.log("Tournament not found with ID:", id);
       return NextResponse.json(
         { message: "Tournament not found." },
         { status: 404 }
       );
     }
 
+    console.log("Tournament successfully updated:", updatedTournament);
+    
+    // Verify the update by querying the database directly
+    try {
+      const verifiedTournament = await Tournament.findById(id);
+      console.log("Verified tournament from database:", verifiedTournament);
+    } catch (verifyError) {
+      console.error("Error verifying tournament update:", verifyError);
+    }
+    
     return NextResponse.json(updatedTournament);
   } catch (error) {
     console.error("Error updating tournament:", error);

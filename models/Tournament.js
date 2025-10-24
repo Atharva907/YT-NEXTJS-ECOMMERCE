@@ -50,6 +50,28 @@ const tournamentSchema = new mongoose.Schema({
     enum: ["upcoming", "live", "completed"],
     default: "upcoming"
   },
+  entryFee: {
+    type: String,
+    required: true,
+    default: "Free"
+  },
+  region: {
+    type: String,
+    required: true,
+    default: "Global"
+  },
+  format: {
+    type: String,
+    enum: ["Solo", "Duo", "Squad"],
+    required: true,
+    default: "Solo"
+  },
+  platform: {
+    type: String,
+    enum: ["Mobile", "PC", "Console"],
+    required: true,
+    default: "PC"
+  },
   prize: {
     type: String,
     required: true

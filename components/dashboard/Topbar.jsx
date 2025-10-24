@@ -3,8 +3,9 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Menu, User, LogOut } from "lucide-react";
 
-export default function Topbar() {
+export default function Topbar({ onOpenSidebar = () => {} }) {
   const [playerName, setPlayerName] = useState("Player");
   const router = useRouter();
   
@@ -56,11 +57,40 @@ export default function Topbar() {
   };
   
   return (
-    <header className="w-full bg-card border-b border-border p-4 flex justify-between items-center">
-      <h2 className="text-lg font-semibold">Welcome back, {playerName}!</h2>
+    <header className="fixed top-0 left-0 w-full bg-gradient-to-r from-slate-900 to-slate-800 border-b border-slate-700 p-4 flex justify-between items-center z-30 md:static shadow-lg relative overflow-hidden">
+      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600"></div>
+      <div className="flex items-center gap-3">
+        {/* Mobile menu button (visible on small screens) */}
+        <Button
+          onClick={onOpenSidebar}
+          type="button"
+          size="icon"
+          className="md:hidden bg-slate-800 hover:bg-slate-700 border border-slate-600"
+          aria-label="Open sidebar"
+        >
+          <Menu className="h-5 w-5 text-white" />
+        </Button>
+        <div>
+          <h2 className="text-lg font-semibold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">Welcome back, {playerName}!</h2>
+          <p className="text-xs text-gray-400">Ready for your next challenge?</p>
+        </div>
+      </div>
       <div className="flex gap-3">
-        <Button variant="outline" onClick={() => router.push("/dashboard/my-account")}>Profile</Button>
-        <Button className="bg-red-500 text-white hover:bg-red-600" onClick={handleLogout}>Logout</Button>
+        <Button 
+          variant="outline" 
+          onClick={() => router.push("/dashboard/my-account")}
+          className="border-purple-500/50 text-purple-300 hover:bg-purple-600/20 hover:border-purple-500 transition-all duration-300 flex items-center gap-2"
+        >
+          <User className="h-4 w-4" />
+          Profile
+        </Button>
+        <Button 
+          className="bg-gradient-to-r from-red-600 to-pink-600 text-white hover:from-red-700 hover:to-pink-700 transition-all duration-300 flex items-center gap-2" 
+          onClick={handleLogout}
+        >
+          <LogOut className="h-4 w-4" />
+          Logout
+        </Button>
       </div>
     </header>
   );

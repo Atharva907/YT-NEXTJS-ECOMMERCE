@@ -9,7 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Edit, Trash2, Calendar, Clock, Trophy, Users, MapPin } from "lucide-react";
+import { Plus, Calendar, Clock, Trophy, Users, MapPin } from "lucide-react";
+import TournamentCard from "@/components/admin/TournamentCard";
 
 const TournamentsPage = () => {
   const [tournaments, setTournaments] = useState([]);
@@ -17,6 +18,7 @@ const TournamentsPage = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedTournament, setSelectedTournament] = useState(null);
   const [activeTab, setActiveTab] = useState("all");
+  const [testResults, setTestResults] = useState(null);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -28,6 +30,10 @@ const TournamentsPage = () => {
     location: "",
     maxParticipants: "",
     status: "upcoming",
+    entryFee: "Free",
+    region: "Global",
+    format: "Solo",
+    platform: "PC",
     prize: "",
     rules: "",
     imageUrl: ""
@@ -42,7 +48,9 @@ const TournamentsPage = () => {
           throw new Error('Failed to fetch tournaments');
         }
         const data = await response.json();
-        setTournaments(data);
+        console.log("Fetched tournaments:", data);
+        const tournamentsData = data.data || data;
+        setTournaments(Array.isArray(tournamentsData) ? tournamentsData : []);
       } catch (error) {
         console.error("Error fetching tournaments:", error);
         setTournaments([]);
@@ -50,7 +58,33 @@ const TournamentsPage = () => {
     };
 
     fetchTournaments();
+    
+    // Set up periodic refresh every 30 seconds
+    const intervalId = setInterval(fetchTournaments, 30000);
+    
+    // Clean up interval on component unmount
+    return () => clearInterval(intervalId);
   }, []);
+  
+  // Refresh tournaments when edit modal is closed
+  useEffect(() => {
+    if (!isEditModalOpen && selectedTournament) {
+      const refreshTournaments = async () => {
+        try {
+          const response = await fetch('/api/tournaments');
+          if (response.ok) {
+            const data = await response.json();
+            console.log("Refreshed tournaments after closing edit modal:", data);
+            setTournaments(data);
+          }
+        } catch (error) {
+          console.error("Error refreshing tournaments:", error);
+        }
+      };
+      
+      refreshTournaments();
+    }
+  }, [isEditModalOpen, selectedTournament]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -79,6 +113,10 @@ const TournamentsPage = () => {
       location: "",
       maxParticipants: "",
       status: "upcoming",
+      entryFee: "Free",
+      region: "Global",
+      format: "Solo",
+      platform: "PC",
       prize: "",
       rules: "",
       imageUrl: ""
@@ -111,29 +149,61 @@ const TournamentsPage = () => {
 
   const handleEditTournament = async () => {
     try {
+      const updateData = {
+        id: selectedTournament._id,
+        ...formData
+      };
+      console.log("Sending update request with data:", updateData);
+      
       const response = await fetch('/api/tournaments', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          id: selectedTournament._id,
-          ...formData
-        }),
+        body: JSON.stringify(updateData),
       });
 
       if (!response.ok) {
+        console.error("API response not OK:", response.status, response.statusText);
         throw new Error('Failed to update tournament');
       }
 
       const updatedTournament = await response.json();
+      console.log("Received updated tournament from API:", updatedTournament);
+      
       const updatedTournaments = tournaments.map(tournament => {
-        if (tournament.id === selectedTournament.id) {
+        if (tournament._id === selectedTournament._id) {
+          console.log("Updating tournament in local state:", tournament._id);
           return updatedTournament;
         }
         return tournament;
       });
-      setTournaments(updatedTournaments);
+      // Find the index of the tournament in the original tournaments array
+      const tournamentIndex = tournaments.findIndex(t => t._id === updatedTournament._id);
+      
+      if (tournamentIndex !== -1) {
+        // Create a new array with the updated tournament
+        const newTournaments = [...tournaments];
+        newTournaments[tournamentIndex] = updatedTournament;
+        setTournaments(newTournaments);
+        console.log("Updated tournament in local state at index:", tournamentIndex);
+      } else {
+        // Fallback to the original approach if the tournament is not found
+        setTournaments(updatedTournaments);
+      }
+      
+      // Refresh tournaments from database to ensure we have the latest data
+      try {
+        const refreshResponse = await fetch('/api/tournaments');
+        if (refreshResponse.ok) {
+          const refreshedData = await refreshResponse.json();
+          console.log("Refreshed tournaments from database:", refreshedData);
+          setTournaments(refreshedData);
+        }
+      } catch (refreshError) {
+        console.error("Error refreshing tournaments:", refreshError);
+      }
+      
       resetForm();
       setIsEditModalOpen(false);
       setSelectedTournament(null);
@@ -154,7 +224,7 @@ const TournamentsPage = () => {
           throw new Error('Failed to delete tournament');
         }
 
-        setTournaments(tournaments.filter(tournament => tournament.id !== id));
+        setTournaments(tournaments.filter(tournament => tournament._id !== id));
       } catch (error) {
         console.error("Error deleting tournament:", error);
         alert("Failed to delete tournament. Please try again.");
@@ -162,29 +232,112 @@ const TournamentsPage = () => {
     }
   };
 
-  const openEditModal = (tournament) => {
-    setSelectedTournament(tournament);
-    setFormData({
-      name: tournament.name,
-      description: tournament.description,
-      game: tournament.game,
-      startDate: tournament.startDate,
-      endDate: tournament.endDate,
-      startTime: tournament.startTime,
-      endTime: tournament.endTime,
-      location: tournament.location,
-      maxParticipants: tournament.maxParticipants,
-      status: tournament.status,
-      prize: tournament.prize,
-      rules: tournament.rules,
-      imageUrl: tournament.imageUrl
-    });
+  const openEditModal = async (tournament) => {
+    console.log("Opening edit modal for tournament:", tournament);
+    
+    try {
+      // Fetch the latest tournament data from the database
+      const response = await fetch(`/api/tournaments/${tournament._id}`);
+      
+      if (response.ok) {
+        const latestTournament = await response.json();
+        console.log("Fetched latest tournament data:", latestTournament);
+        
+        setSelectedTournament(latestTournament);
+        setFormData({
+          name: latestTournament.name,
+          description: latestTournament.description,
+          game: latestTournament.game,
+          startDate: latestTournament.startDate,
+          endDate: latestTournament.endDate,
+          startTime: latestTournament.startTime,
+          endTime: latestTournament.endTime,
+          location: latestTournament.location,
+          maxParticipants: latestTournament.maxParticipants,
+          status: latestTournament.status,
+          entryFee: latestTournament.entryFee || "Free",
+          region: latestTournament.region || "Global",
+          format: latestTournament.format || "Solo",
+          platform: latestTournament.platform || "PC",
+          prize: latestTournament.prize,
+          rules: latestTournament.rules,
+          imageUrl: latestTournament.imageUrl
+        });
+      } else {
+        // If fetching fails, use the provided tournament data
+        console.error("Failed to fetch latest tournament data, using provided data");
+        setSelectedTournament(tournament);
+        setFormData({
+          name: tournament.name,
+          description: tournament.description,
+          game: tournament.game,
+          startDate: tournament.startDate,
+          endDate: tournament.endDate,
+          startTime: tournament.startTime,
+          endTime: tournament.endTime,
+          location: tournament.location,
+          maxParticipants: tournament.maxParticipants,
+          status: tournament.status,
+          entryFee: tournament.entryFee || "Free",
+          region: tournament.region || "Global",
+          format: tournament.format || "Solo",
+          platform: tournament.platform || "PC",
+          prize: tournament.prize,
+          rules: tournament.rules,
+          imageUrl: tournament.imageUrl
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching latest tournament data:", error);
+      // If fetching fails, use the provided tournament data
+      setSelectedTournament(tournament);
+      setFormData({
+        name: tournament.name,
+        description: tournament.description,
+        game: tournament.game,
+        startDate: tournament.startDate,
+        endDate: tournament.endDate,
+        startTime: tournament.startTime,
+        endTime: tournament.endTime,
+        location: tournament.location,
+        maxParticipants: tournament.maxParticipants,
+        status: tournament.status,
+        entryFee: tournament.entryFee || "Free",
+        region: tournament.region || "Global",
+        format: tournament.format || "Solo",
+        platform: tournament.platform || "PC",
+        prize: tournament.prize,
+        rules: tournament.rules,
+        imageUrl: tournament.imageUrl
+      });
+    }
+    
     setIsEditModalOpen(true);
   };
 
   const filterTournaments = (status) => {
     if (status === "all") return tournaments;
     return tournaments.filter(tournament => tournament.status === status);
+  };
+
+  const testDatabaseConnection = async () => {
+    try {
+      console.log("Testing database connection...");
+      const response = await fetch("/api/test-db");
+      const data = await response.json();
+      console.log("Database test results:", data);
+      setTestResults(data);
+      
+      // Also test the update operation
+      console.log("Testing update operation...");
+      const updateResponse = await fetch("/api/test-update");
+      const updateData = await updateResponse.json();
+      console.log("Update test results:", updateData);
+      setTestResults(prev => ({ ...prev, updateTest: updateData }));
+    } catch (error) {
+      console.error("Error testing database:", error);
+      setTestResults({ error: error.message });
+    }
   };
 
   const getStatusColor = (status) => {
@@ -341,6 +494,56 @@ const TournamentsPage = () => {
                   </Select>
                 </div>
                 <div className="space-y-2">
+                  <Label htmlFor="entryFee">Entry Fee</Label>
+                  <Input
+                    id="entryFee"
+                    name="entryFee"
+                    value={formData.entryFee}
+                    onChange={handleInputChange}
+                    placeholder="Enter entry fee (e.g., Free, $10)"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="region">Region</Label>
+                  <Input
+                    id="region"
+                    name="region"
+                    value={formData.region}
+                    onChange={handleInputChange}
+                    placeholder="Enter region (e.g., Global, NA, EU)"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="format">Format</Label>
+                  <Select onValueChange={(value) => handleSelectChange(value, "format")}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select format" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Solo">Solo</SelectItem>
+                      <SelectItem value="Duo">Duo</SelectItem>
+                      <SelectItem value="Squad">Squad</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="platform">Platform</Label>
+                  <Select onValueChange={(value) => handleSelectChange(value, "platform")}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select platform" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Mobile">Mobile</SelectItem>
+                      <SelectItem value="PC">PC</SelectItem>
+                      <SelectItem value="Console">Console</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
                   <Label htmlFor="prize">Prize Pool</Label>
                   <Input
                     id="prize"
@@ -396,53 +599,13 @@ const TournamentsPage = () => {
         <TabsContent value="all" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {filterTournaments("all").map((tournament) => (
-              <Card key={tournament._id} className="overflow-hidden">
-                <div className="aspect-video w-full bg-gray-200 dark:bg-gray-700 relative">
-                  {/* In a real app, use Next.js Image component */}
-                  <div className="absolute inset-0 flex items-center justify-center text-gray-500">
-                    <Trophy className="h-12 w-12" />
-                  </div>
-                </div>
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <CardTitle className="text-xl">{tournament.name}</CardTitle>
-                    <Badge className={`${getStatusColor(tournament.status)} text-white`}>
-                      {tournament.status}
-                    </Badge>
-                  </div>
-                  <CardDescription>{tournament.game}</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <p className="text-sm">{tournament.description}</p>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Calendar className="h-4 w-4" />
-                    {tournament.startDate} - {tournament.endDate}
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Clock className="h-4 w-4" />
-                    {tournament.startTime} - {tournament.endTime}
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <MapPin className="h-4 w-4" />
-                    {tournament.location}
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Users className="h-4 w-4" />
-                    {tournament.currentParticipants}/{tournament.maxParticipants} participants
-                  </div>
-                </CardContent>
-                <CardFooter className="flex justify-between">
-                  <div className="text-sm font-medium">{tournament.prize} Prize Pool</div>
-                  <div className="flex gap-2">
-                    <Button size="sm" variant="outline" onClick={() => openEditModal(tournament)}>
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => handleDeleteTournament(tournament._id)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </CardFooter>
-              </Card>
+              <TournamentCard
+                key={tournament._id}
+                tournament={tournament}
+                onEdit={openEditModal}
+                onDelete={handleDeleteTournament}
+                getStatusColor={getStatusColor}
+              />
             ))}
           </div>
         </TabsContent>
@@ -450,54 +613,16 @@ const TournamentsPage = () => {
         <TabsContent value="live" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {filterTournaments("live").map((tournament) => (
-              <Card key={tournament.id} className="overflow-hidden border-green-500">
-                <div className="aspect-video w-full bg-gray-200 dark:bg-gray-700 relative">
-                  {/* In a real app, use Next.js Image component */}
-                  <div className="absolute inset-0 flex items-center justify-center text-gray-500">
-                    <Trophy className="h-12 w-12" />
-                  </div>
-                  <Badge className="absolute top-2 right-2 bg-green-500 text-white">LIVE NOW</Badge>
-                </div>
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <CardTitle className="text-xl">{tournament.name}</CardTitle>
-                    <Badge className="bg-green-500 text-white">
-                      {tournament.status}
-                    </Badge>
-                  </div>
-                  <CardDescription>{tournament.game}</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <p className="text-sm">{tournament.description}</p>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Calendar className="h-4 w-4" />
-                    {tournament.startDate} - {tournament.endDate}
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Clock className="h-4 w-4" />
-                    {tournament.startTime} - {tournament.endTime}
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <MapPin className="h-4 w-4" />
-                    {tournament.location}
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Users className="h-4 w-4" />
-                    {tournament.currentParticipants}/{tournament.maxParticipants} participants
-                  </div>
-                </CardContent>
-                <CardFooter className="flex justify-between">
-                  <div className="text-sm font-medium">{tournament.prize} Prize Pool</div>
-                  <div className="flex gap-2">
-                    <Button size="sm" variant="outline" onClick={() => openEditModal(tournament)}>
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => handleDeleteTournament(tournament._id)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </CardFooter>
-              </Card>
+              <div key={tournament._id} className="relative">
+                <Badge className="absolute top-2 right-2 z-10 bg-green-500 text-white">LIVE NOW</Badge>
+                <TournamentCard
+                  tournament={tournament}
+                  onEdit={openEditModal}
+                  onDelete={handleDeleteTournament}
+                  getStatusColor={getStatusColor}
+                  className="border-green-500"
+                />
+              </div>
             ))}
           </div>
         </TabsContent>
@@ -505,54 +630,16 @@ const TournamentsPage = () => {
         <TabsContent value="upcoming" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {filterTournaments("upcoming").map((tournament) => (
-              <Card key={tournament._id} className="overflow-hidden">
-                <div className="aspect-video w-full bg-gray-200 dark:bg-gray-700 relative">
-                  {/* In a real app, use Next.js Image component */}
-                  <div className="absolute inset-0 flex items-center justify-center text-gray-500">
-                    <Trophy className="h-12 w-12" />
-                  </div>
-                  <Badge className="absolute top-2 right-2 bg-blue-500 text-white">UPCOMING</Badge>
-                </div>
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <CardTitle className="text-xl">{tournament.name}</CardTitle>
-                    <Badge className="bg-blue-500 text-white">
-                      {tournament.status}
-                    </Badge>
-                  </div>
-                  <CardDescription>{tournament.game}</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <p className="text-sm">{tournament.description}</p>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Calendar className="h-4 w-4" />
-                    {tournament.startDate} - {tournament.endDate}
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Clock className="h-4 w-4" />
-                    {tournament.startTime} - {tournament.endTime}
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <MapPin className="h-4 w-4" />
-                    {tournament.location}
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Users className="h-4 w-4" />
-                    {tournament.currentParticipants}/{tournament.maxParticipants} participants
-                  </div>
-                </CardContent>
-                <CardFooter className="flex justify-between">
-                  <div className="text-sm font-medium">{tournament.prize} Prize Pool</div>
-                  <div className="flex gap-2">
-                    <Button size="sm" variant="outline" onClick={() => openEditModal(tournament)}>
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => handleDeleteTournament(tournament._id)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </CardFooter>
-              </Card>
+              <div key={tournament._id} className="relative">
+                <Badge className="absolute top-2 right-2 z-10 bg-blue-500 text-white">UPCOMING</Badge>
+                <TournamentCard
+                  tournament={tournament}
+                  onEdit={openEditModal}
+                  onDelete={handleDeleteTournament}
+                  getStatusColor={getStatusColor}
+                  className="border-blue-500"
+                />
+              </div>
             ))}
           </div>
         </TabsContent>
@@ -560,54 +647,16 @@ const TournamentsPage = () => {
         <TabsContent value="completed" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {filterTournaments("completed").map((tournament) => (
-              <Card key={tournament.id} className="overflow-hidden opacity-75">
-                <div className="aspect-video w-full bg-gray-200 dark:bg-gray-700 relative">
-                  {/* In a real app, use Next.js Image component */}
-                  <div className="absolute inset-0 flex items-center justify-center text-gray-500">
-                    <Trophy className="h-12 w-12" />
-                  </div>
-                  <Badge className="absolute top-2 right-2 bg-gray-500 text-white">COMPLETED</Badge>
-                </div>
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <CardTitle className="text-xl">{tournament.name}</CardTitle>
-                    <Badge className="bg-gray-500 text-white">
-                      {tournament.status}
-                    </Badge>
-                  </div>
-                  <CardDescription>{tournament.game}</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <p className="text-sm">{tournament.description}</p>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Calendar className="h-4 w-4" />
-                    {tournament.startDate} - {tournament.endDate}
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Clock className="h-4 w-4" />
-                    {tournament.startTime} - {tournament.endTime}
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <MapPin className="h-4 w-4" />
-                    {tournament.location}
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Users className="h-4 w-4" />
-                    {tournament.currentParticipants}/{tournament.maxParticipants} participants
-                  </div>
-                </CardContent>
-                <CardFooter className="flex justify-between">
-                  <div className="text-sm font-medium">{tournament.prize} Prize Pool</div>
-                  <div className="flex gap-2">
-                    <Button size="sm" variant="outline" onClick={() => openEditModal(tournament)}>
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => handleDeleteTournament(tournament._id)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </CardFooter>
-              </Card>
+              <div key={tournament._id} className="relative">
+                <Badge className="absolute top-2 right-2 z-10 bg-gray-500 text-white">COMPLETED</Badge>
+                <TournamentCard
+                  tournament={tournament}
+                  onEdit={openEditModal}
+                  onDelete={handleDeleteTournament}
+                  getStatusColor={getStatusColor}
+                  className="opacity-75 border-gray-500"
+                />
+              </div>
             ))}
           </div>
         </TabsContent>
@@ -734,6 +783,56 @@ const TournamentsPage = () => {
                     <SelectItem value="upcoming">Upcoming</SelectItem>
                     <SelectItem value="live">Live</SelectItem>
                     <SelectItem value="completed">Completed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-entryFee">Entry Fee</Label>
+                <Input
+                  id="edit-entryFee"
+                  name="entryFee"
+                  value={formData.entryFee}
+                  onChange={handleInputChange}
+                  placeholder="Enter entry fee (e.g., Free, $10)"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-region">Region</Label>
+                <Input
+                  id="edit-region"
+                  name="region"
+                  value={formData.region}
+                  onChange={handleInputChange}
+                  placeholder="Enter region (e.g., Global, NA, EU)"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-format">Format</Label>
+                <Select onValueChange={(value) => handleSelectChange(value, "format")}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select format" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Solo">Solo</SelectItem>
+                    <SelectItem value="Duo">Duo</SelectItem>
+                    <SelectItem value="Squad">Squad</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-platform">Platform</Label>
+                <Select onValueChange={(value) => handleSelectChange(value, "platform")}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select platform" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Mobile">Mobile</SelectItem>
+                    <SelectItem value="PC">PC</SelectItem>
+                    <SelectItem value="Console">Console</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

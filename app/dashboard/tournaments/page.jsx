@@ -3,31 +3,46 @@
 import RegisterCard from "./RegisterCard";
 import RegisteredTournaments from "./RegisteredTournaments";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Trophy, Filter, Search, Calendar, TrendingUp } from "lucide-react";
-import { tournamentsData } from "@/lib/data";
+// Removed hardcoded data import
 import { filterTournamentsByStatus, sortTournamentsByDate } from "@/lib/esportUtils";
 import LoadingSkeleton from "@/components/dashboard/LoadingSkeleton";
 
 export default function TournamentsPage() {
+  const router = useRouter();
   const [registered, setRegistered] = useState([]);
   const [tournaments, setTournaments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   
-  // Simulate fetching tournaments data from an API
+  // Fetch tournaments data from database
   useEffect(() => {
     const fetchTournaments = async () => {
       setLoading(true);
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 800));
+      try {
+        const response = await fetch("/api/tournaments");
       
-      // In a real app, this would be an API call
-      setTournaments(tournamentsData);
-      setLoading(false);
+        if (response.ok) {
+          const data = await response.json();
+          // The actual tournaments data is in data field
+          const tournamentsData = data.data || data;
+          console.log("API Response:", data);
+          console.log("First tournament:", tournamentsData[0]);
+
+          setTournaments(Array.isArray(tournamentsData) ? tournamentsData : []);
+        } else {
+          console.error("Failed to fetch tournaments");
+        }
+      } catch (error) {
+        console.error("Error fetching tournaments:", error);
+      } finally {
+        setLoading(false);
+      }
     };
     
     fetchTournaments();
@@ -45,7 +60,7 @@ export default function TournamentsPage() {
   const sortedTournaments = sortTournamentsByDate(filteredTournaments);
   
   const handleRegister = (id) => {
-    if (!registered.includes(id)) setRegistered([...registered, id]);
+    router.push(`/tournaments/${id}/register`);
   };
 
   const handleUnregister = (id) => {
@@ -140,11 +155,11 @@ export default function TournamentsPage() {
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {sortedTournaments.map((t) => (
                 <RegisterCard
-                  key={t.id}
+                  key={t.id || t._id}
                   tournament={t}
-                  isRegistered={registered.includes(t.id)}
-                  onRegister={() => handleRegister(t.id)}
-                  onUnregister={() => handleUnregister(t.id)}
+                  isRegistered={registered.includes(t.id || t._id)}
+                  onRegister={() => handleRegister(t.id || t._id)}
+                  onUnregister={() => handleUnregister(t.id || t._id)}
                 />
               ))}
             </div>
@@ -159,7 +174,7 @@ export default function TournamentsPage() {
       </Tabs>
 
       <RegisteredTournaments
-        tournaments={tournaments.filter((t) => registered.includes(t.id))}
+        tournaments={tournaments.filter((t) => registered.includes(t.id || t._id))}
       />
     </div>
   );

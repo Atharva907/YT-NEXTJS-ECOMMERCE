@@ -6,11 +6,17 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Calendar, Users, Trophy, MapPin, Clock, ExternalLink } from "lucide-react";
 import { formatCurrency, getStatusColor, truncateText } from "@/lib/esportUtils";
+import { useRouter } from "next/navigation";
 
 export default function RegisterCard({ tournament, isRegistered, onRegister, onUnregister }) {
-  const registrationProgress = (tournament.currentPlayers / tournament.maxPlayers) * 100;
-  const isFull = tournament.currentPlayers >= tournament.maxPlayers;
-  const isPast = new Date(tournament.date) < new Date();
+  const router = useRouter();
+  console.log("Tournament data:", tournament);
+  console.log("Dates:", tournament.startDate, tournament.endDate);
+  console.log("Times:", tournament.startTime, tournament.endTime);
+
+  const registrationProgress = (tournament.currentParticipants / tournament.maxParticipants) * 100;
+  const isFull = tournament.currentParticipants >= tournament.maxParticipants;
+  const isPast = new Date(tournament.startDate) < new Date();
   
   return (
     <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 bg-slate-800 border-slate-700 text-white h-full flex flex-col">
@@ -43,35 +49,40 @@ export default function RegisterCard({ tournament, isRegistered, onRegister, onU
       <CardContent className="flex-grow space-y-3 text-sm">
         <div className="flex items-center gap-2 text-gray-300">
           <Calendar className="h-4 w-4" />
-          <span>{tournament.date}</span>
+          <span>{tournament.startDate || "N/A"} - {tournament.endDate || "N/A"}</span>
         </div>
         
+        <div className="flex items-center gap-2 text-gray-300">
+          <Clock className="h-4 w-4" />
+          <span>{tournament.startTime || "N/A"} - {tournament.endTime || "N/A"}</span>
+        </div>
+
         <div className="flex items-center gap-2 text-gray-300">
           <MapPin className="h-4 w-4" />
-          <span>{tournament.region}</span>
+          <span>{tournament.location || "N/A"}</span>
         </div>
         
-        <div className="flex items-center gap-2 text-gray-300">
+        <div className="flex items-center gap-2 text-white">
           <Users className="h-4 w-4" />
-          <span>{tournament.format}</span>
+          <span>{tournament.format || "N/A"}</span>
         </div>
         
         <div className="pt-2 space-y-2">
           <div className="flex justify-between items-center">
             <span className="text-gray-400">Entry Fee</span>
-            <span className="font-semibold text-green-400">{tournament.entryFee}</span>
+            <span className="font-semibold text-green-400">{tournament.entryFee || "Free"}</span>
           </div>
           
           <div className="flex justify-between items-center">
             <span className="text-gray-400">Prize Pool</span>
-            <span className="font-semibold text-yellow-400">{tournament.prize}</span>
+            <span className="font-semibold text-yellow-400">{tournament.prize || "N/A"}</span>
           </div>
         </div>
         
         <div className="pt-2 space-y-1">
           <div className="flex justify-between text-xs text-gray-400 mb-1">
             <span>Registration</span>
-            <span>{tournament.currentPlayers}/{tournament.maxPlayers}</span>
+            <span>{tournament.currentParticipants}/{tournament.maxParticipants}</span>
           </div>
           <Progress value={registrationProgress} className="h-2 bg-slate-700" />
         </div>
@@ -96,7 +107,12 @@ export default function RegisterCard({ tournament, isRegistered, onRegister, onU
           {isRegistered ? "Unregister" : isFull ? "Full" : isPast ? "Ended" : "Register"}
         </Button>
         
-        <Button variant="outline" size="sm" className="w-full border-slate-600 text-gray-300 hover:bg-slate-700">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="w-full border-slate-600 text-gray-300 hover:bg-slate-700"
+          onClick={() => router.push(`/tournaments/${tournament.id || tournament._id}`)}
+        >
           <ExternalLink className="h-4 w-4 mr-2" />
           View Details
         </Button>

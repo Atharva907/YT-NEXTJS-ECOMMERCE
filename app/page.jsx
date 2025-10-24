@@ -54,8 +54,12 @@ const GameArena = () => {
           throw new Error('Failed to fetch tournaments');
         }
         const data = await response.json();
+        // Extract tournaments data from response
+        const tournamentsData = data.data || data;
         // Sort tournaments by start date (newest first)
-        const sortedTournaments = data.sort((a, b) => new Date(b.startDate) - new Date(a.startDate));
+        const sortedTournaments = Array.isArray(tournamentsData) 
+          ? tournamentsData.sort((a, b) => new Date(b.startDate) - new Date(a.startDate))
+          : [];
         setTournaments(sortedTournaments);
       } catch (error) {
         console.error("Error fetching tournaments:", error);

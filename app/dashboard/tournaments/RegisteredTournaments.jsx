@@ -8,13 +8,7 @@ import { formatDate, getStatusColor } from "@/lib/esportUtils";
 
 export default function RegisteredTournaments({ tournaments }) {
   if (tournaments.length === 0)
-    return (
-      <Card className="bg-slate-800/60 backdrop-blur-sm border-slate-700 text-white p-8 text-center mt-8">
-        <Trophy className="h-12 w-12 mx-auto text-gray-500 mb-4" />
-        <h3 className="text-xl font-semibold mb-2">No Registered Tournaments</h3>
-        <p className="text-gray-400">Register for tournaments to see them here</p>
-      </Card>
-    );
+    return null;
 
   return (
     <div className="mt-8 space-y-6">
@@ -27,7 +21,7 @@ export default function RegisteredTournaments({ tournaments }) {
       
       <div className="grid gap-4">
         {tournaments.map((t) => (
-          <Card key={t.id} className="bg-slate-800/60 backdrop-blur-sm border-slate-700 text-white overflow-hidden hover:shadow-lg transition-all duration-300 hover:border-purple-500/50">
+          <Card key={t.id || t._id} className="bg-slate-800/60 backdrop-blur-sm border-slate-700 text-white overflow-hidden hover:shadow-lg transition-all duration-300 hover:border-purple-500/50">
             <div className="flex flex-col md:flex-row">
               <div className="md:w-48 h-32 md:h-auto bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center">
                 <Trophy className="h-16 w-16 text-white opacity-50" />
