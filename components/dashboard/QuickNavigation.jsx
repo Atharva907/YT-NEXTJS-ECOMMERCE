@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Trophy, Wallet, User, Gamepad2 } from "lucide-react";
+import { Trophy, Wallet, User, Gamepad2, ShoppingCart } from "lucide-react";
 
 export default function QuickNavigation() {
   return (
@@ -12,7 +12,7 @@ export default function QuickNavigation() {
           <span className="h-5 w-1 bg-gradient-to-b from-purple-500 to-pink-500 rounded-full"></span>
           Quick Access
         </h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           <Link href="/dashboard">
             <Button variant="outline" className="w-full justify-start gap-2 bg-slate-700/30 border-slate-600 text-gray-300 hover:bg-gradient-to-r hover:from-blue-600/20 hover:to-purple-600/20 hover:border-blue-500/50 transition-all duration-300">
               <div className="p-1 bg-gradient-to-br from-blue-600 to-purple-600 rounded">
@@ -35,6 +35,14 @@ export default function QuickNavigation() {
                 <Wallet className="h-3 w-3 text-white" />
               </div>
               Wallet
+            </Button>
+          </Link>
+          <Link href="/shop">
+            <Button variant="outline" className="w-full justify-start gap-2 bg-slate-700/30 border-slate-600 text-gray-300 hover:bg-gradient-to-r hover:from-pink-600/20 hover:to-red-600/20 hover:border-pink-500/50 transition-all duration-300">
+              <div className="p-1 bg-gradient-to-br from-pink-600 to-red-600 rounded">
+                <ShoppingCart className="h-3 w-3 text-white" />
+              </div>
+              Shop
             </Button>
           </Link>
           <Link href="/dashboard/my-account">

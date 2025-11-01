@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Home, User, Trophy, Settings, Wallet, Gamepad2, X } from "lucide-react";
+import { Home, User, Trophy, Settings, Wallet, Gamepad2, X, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const navItems = [
@@ -9,6 +9,7 @@ const navItems = [
   { name: "My Account", href: "/dashboard/my-account", icon: User, color: "from-purple-600 to-pink-600" },
   { name: "Tournaments", href: "/dashboard/tournaments", icon: Gamepad2, color: "from-orange-600 to-red-600" },
   { name: "My Tournaments", href: "/dashboard/my-tournaments", icon: Trophy, color: "from-yellow-600 to-orange-600" },
+  { name: "Orders", href: "/dashboard/orders", icon: Package, color: "from-indigo-600 to-blue-600" },
   { name: "Wallet", href: "/dashboard/wallet", icon: Wallet, color: "from-green-600 to-emerald-600" },
   { name: "Settings", href: "/dashboard/settings", icon: Settings, color: "from-gray-600 to-slate-600" },
 ];

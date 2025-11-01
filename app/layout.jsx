@@ -1,4 +1,4 @@
-import GlobalProvider from "@/components/Application/GlobalProvider";
+import GlobalProvider from "@/components/Application/GlobalProviderNew";
 import "./globals.css";
 import { Assistant } from 'next/font/google'
 import { ToastContainer, toast } from 'react-toastify';

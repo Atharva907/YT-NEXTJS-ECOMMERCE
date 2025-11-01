@@ -1,9 +1,10 @@
 import DashboardCard from "@/components/dashboard/DashboardCard";
 import QuickNavigation from "@/components/dashboard/QuickNavigation";
+import WalletCard from "@/components/dashboard/WalletCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Gamepad2, Wallet, TrendingUp, Users, Calendar } from "lucide-react";
+import { Trophy, Gamepad2, TrendingUp, Users, Calendar } from "lucide-react";
 
 export default function DashboardHome() {
   return (
@@ -24,6 +25,7 @@ export default function DashboardHome() {
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <WalletCard />
         <Card className="bg-gradient-to-br from-slate-800 to-slate-900 border-slate-700 text-white shadow-xl overflow-hidden relative">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600"></div>
           <CardHeader className="flex flex-row items-center justify-between pb-3">

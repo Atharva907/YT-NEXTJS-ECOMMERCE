@@ -71,6 +71,27 @@ const GameArena = () => {
     fetchAllTournaments();
   }, []);
 
+  const [featuredProducts, setFeaturedProducts] = useState([]);
+
+  // Load featured products from API
+  useEffect(() => {
+    const fetchFeaturedProducts = async () => {
+      try {
+        const response = await fetch('/api/products?featured=true&limit=4');
+        if (!response.ok) {
+          throw new Error('Failed to fetch featured products');
+        }
+        const data = await response.json();
+        setFeaturedProducts(data.products || []);
+      } catch (error) {
+        console.error("Error fetching featured products:", error);
+        setFeaturedProducts([]);
+      }
+    };
+
+    fetchFeaturedProducts();
+  }, []);
+
   const features = [
     {
       icon: "🏆",
@@ -81,6 +102,11 @@ const GameArena = () => {
       icon: "💳",
       title: "Wallet & Earnings",
       description: "Track your winnings and manage your prize pool easily.",
+    },
+    {
+      icon: "🛍️",
+      title: "Shop",
+      description: "Get exclusive gaming gear and merchandise from our store.",
     },
     {
       icon: "📊",
@@ -128,6 +154,11 @@ const GameArena = () => {
               </h1>
             </div>
             <div className="flex items-center space-x-4">
+              <Link href="/shop">
+                <Button className="bg-transparent border border-purple-500 text-purple-400 hover:bg-purple-500 hover:text-white transition-all duration-300 shadow-[0_0_10px_rgba(168,85,247,0.5)] hover:shadow-[0_0_20px_rgba(168,85,247,0.8)]">
+                  Shop
+                </Button>
+              </Link>
               <Link href="/auth/login">
                 <Button className="bg-transparent border border-[#00FFAA] text-[#00FFAA] hover:bg-[#00FFAA] hover:text-[#0B0F19] transition-all duration-300 shadow-[0_0_10px_rgba(0,255,170,0.5)] hover:shadow-[0_0_20px_rgba(0,255,170,0.8)]">
                   Login
@@ -487,6 +518,63 @@ const GameArena = () => {
             </Card>
           ))}
         </div>
+      </section>
+
+      {/* Featured Products Section */}
+      <section className="py-20 px-4 bg-gradient-to-b from-black/50 to-black/30">
+        <div className="max-w-7xl mx-auto mb-8">
+          <h2 className="text-4xl font-bold text-center mb-8 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+            Featured Products
+          </h2>
+        </div>
+
+        {featuredProducts.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
+            {featuredProducts.map((product) => (
+              <Card
+                key={product._id}
+                className="bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition-all duration-300 rounded-xl overflow-hidden hover:shadow-[0_0_20px_rgba(168,85,247,0.3)] hover:-translate-y-2"
+              >
+                <div className="relative h-48 bg-gradient-to-br from-slate-900/30 to-slate-800/30 overflow-hidden">
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                  />
+                  {product.isFeatured && (
+                    <div className="absolute top-4 left-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs px-3 py-1 rounded-full font-semibold">
+                      Featured
+                    </div>
+                  )}
+                </div>
+                <CardContent className="p-6">
+                  <h3 className="text-xl font-bold mb-2 text-white">{product.name}</h3>
+                  <p className="text-gray-300 text-sm mb-4 line-clamp-2">{product.description}</p>
+                  <div className="flex justify-between items-center mb-4">
+                    <span className="text-2xl font-bold text-[#00FFAA]">${product.price}</span>
+                    <span className="text-sm text-gray-400">Stock: {product.inStock}</span>
+                  </div>
+                  <Button
+                    asChild
+                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                  >
+                    <Link href="/shop">View in Shop</Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="max-w-7xl mx-auto text-center py-12">
+            <p className="text-gray-400 mb-6">No featured products available at the moment</p>
+            <Button
+              asChild
+              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+            >
+              <Link href="/shop">Visit Shop</Link>
+            </Button>
+          </div>
+        )}
       </section>
 
       {/* Esports News & Updates */}
